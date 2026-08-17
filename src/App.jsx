@@ -52,7 +52,7 @@ export default function App() {
     fetch(`${API_BASE}/health`)
       .then((r) => (r.ok ? r.json() : null))
       .then((h) => !cancelled && setHealth(h))
-      .catch(() => {})
+      .catch(() => { })
     return () => {
       cancelled = true
     }
@@ -126,7 +126,7 @@ export default function App() {
   return (
     <main>
       <header>
-        <h1>Celebrity Look-Alike</h1>
+        <h1>VAYUZ mukham or surat or shakal or something something.....</h1>
         <p className="tagline">
           Upload a photo and see the five celebrities you most resemble.
         </p>
