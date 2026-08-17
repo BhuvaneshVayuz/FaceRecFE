@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-// Set in .env.local for dev and in Vercel's project settings for production.
-// Vite inlines VITE_* at BUILD time, so changing this in Vercel needs a
-// redeploy, not a restart. Trailing slash trimmed so no URL becomes "//api".
-const API_BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/+$/, '')
+// Fallback only. The host page passes `apiBase` as a prop now, because a bundle
+// dropped onto someone else's page cannot be rebuilt just to repoint the API.
+// Vite still inlines VITE_* at BUILD time, so this is what a standalone build
+// (npm run dev / npm run build) uses when no prop is given.
+const ENV_API_BASE = import.meta.env.VITE_API_BASE ?? ''
 
 // Mirrors settings.max_upload_bytes on the backend. Checked here purely so an
 // oversized photo fails instantly instead of after uploading 40MB over mobile
@@ -32,7 +33,17 @@ async function detailFrom(response) {
   return `The server returned ${response.status}. Please try again.`
 }
 
-export default function App() {
+/**
+ * The look-alike experience itself. Renders the dialog's head/body/foot but not
+ * the dialog — ExportApp owns the popup chrome, so this stays reusable if a
+ * host ever wants it inline.
+ */
+export default function App({
+  title = 'Celebrity Look-Alike',
+  tagline = 'Upload a photo and meet the five celebrities you most resemble.',
+  titleId,
+  apiBase,
+}) {
   const [file, setFile] = useState(null)
   const [preview, setPreview] = useState(null)
   const [gender, setGender] = useState('any')
@@ -44,19 +55,22 @@ export default function App() {
   const [health, setHealth] = useState(null)
   const inputRef = useRef(null)
 
+  // Trailing slash trimmed so no URL becomes "//api".
+  const base = useMemo(() => (apiBase ?? ENV_API_BASE).replace(/\/+$/, ''), [apiBase])
+
   // Doubles as the wake-up call: a free Render instance sleeps after inactivity,
   // and this fires while the visitor is still choosing a photo, so the cold
   // start overlaps with them rather than with their first upload.
   useEffect(() => {
     let cancelled = false
-    fetch(`${API_BASE}/health`)
+    fetch(`${base}/health`)
       .then((r) => (r.ok ? r.json() : null))
       .then((h) => !cancelled && setHealth(h))
       .catch(() => { })
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [base])
 
   // Object URLs leak until revoked, and this one is replaced on every pick.
   useEffect(() => {
@@ -100,7 +114,7 @@ export default function App() {
       form.append('file', file)
       form.append('gender', gender)
 
-      const response = await fetch(`${API_BASE}/api/lookalike`, {
+      const response = await fetch(`${base}/api/lookalike`, {
         method: 'POST',
         body: form,
       })
@@ -124,149 +138,170 @@ export default function App() {
   }
 
   return (
-    <main>
-      <header>
-        <h1>VAYUZ mukham or surat or shakal or something something.....</h1>
-        <p className="tagline">
-          Upload a photo and see the five celebrities you most resemble.
-        </p>
+    <>
+      <header className="clm-head">
+        <h1 className="clm-title" id={titleId}>{title}</h1>
+        <p className="clm-tagline">{tagline}</p>
       </header>
 
-      <form onSubmit={submit}>
-        <button
-          type="button"
-          className={`dropzone ${preview ? 'has-photo' : ''}`}
-          onClick={() => inputRef.current?.click()}
-        >
-          {preview ? (
-            <img src={preview} alt="The photo you selected" />
-          ) : (
-            <span>
-              <strong>Choose a photo</strong>
-              <small>A clear, front-facing shot with just you in it</small>
-            </span>
+      <div className="clm-body">
+        <form className="clm-form" onSubmit={submit}>
+          <button
+            type="button"
+            className={`clm-dropzone${preview ? ' is-filled' : ''}`}
+            onClick={() => inputRef.current?.click()}
+          >
+            {preview ? (
+              <img src={preview} alt="The photo you selected" />
+            ) : (
+              <span className="clm-dropzone-empty">
+                <svg
+                  className="clm-dropzone-icon"
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h2.2a1.5 1.5 0 0 0 1.25-.67l.6-.9A1.5 1.5 0 0 1 9.8 3.75h4.4a1.5 1.5 0 0 1 1.25.68l.6.9A1.5 1.5 0 0 0 17.3 6h2.2A1.5 1.5 0 0 1 21 7.5v10a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z" />
+                  <circle cx="12" cy="12.5" r="3.5" />
+                </svg>
+                <span className="clm-dropzone-title">Choose a photo</span>
+                <span className="clm-dropzone-hint">
+                  A clear, front-facing shot with just you in it
+                </span>
+              </span>
+            )}
+          </button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            className="clm-sr-only"
+            onChange={pick}
+          />
+
+          <fieldset>
+            <legend className="clm-legend">Compare against</legend>
+            <div className="clm-segmented">
+              {GENDERS.map((option) => (
+                <label
+                  key={option.value}
+                  className={`clm-segment${gender === option.value ? ' is-on' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="clm-gender"
+                    value={option.value}
+                    checked={gender === option.value}
+                    onChange={() => setGender(option.value)}
+                    className="clm-sr-only"
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <button type="submit" className="clm-cta" disabled={!file || busy}>
+            {busy && <span className="clm-spinner" aria-hidden="true" />}
+            {busy ? 'Looking…' : 'Find look-alikes'}
+          </button>
+          {slow && (
+            <p className="clm-hint">
+              The server sleeps when idle and can take up to a minute to wake. Hang on.
+            </p>
           )}
-        </button>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          className="visually-hidden"
-          onChange={pick}
-        />
+        </form>
 
-        <fieldset>
-          <legend>Compare against</legend>
-          <div className="segmented">
-            {GENDERS.map((option) => (
-              <label key={option.value} className={gender === option.value ? 'on' : ''}>
-                <input
-                  type="radio"
-                  name="gender"
-                  value={option.value}
-                  checked={gender === option.value}
-                  onChange={() => setGender(option.value)}
-                  className="visually-hidden"
-                />
-                {option.label}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        {error && <p className="clm-error">{error}</p>}
 
-        <button type="submit" className="go" disabled={!file || busy}>
-          {busy ? 'Looking…' : 'Find look-alikes'}
-        </button>
-        {slow && (
-          <p className="hint">
-            The server sleeps when idle and can take up to a minute to wake. Hang on.
-          </p>
-        )}
-      </form>
+        {results && match && (
+          <section className="clm-results">
+            {/* The comparison itself: your face and theirs at the same size, side
+                by side. Both images are already in the browser — yours as a local
+                object URL, theirs from the one API response — so flipping between
+                the five costs no further requests. */}
+            <div className="clm-compare">
+              <figure>
+                <div className="clm-frame">
+                  {preview && <img src={preview} alt="Your photo" />}
+                </div>
+                <figcaption>You</figcaption>
+              </figure>
 
-      {error && <p className="error">{error}</p>}
-
-      {results && match && (
-        <section className="results">
-          {/* The comparison itself: your face and theirs at the same size, side
-              by side. Both images are already in the browser — yours as a local
-              object URL, theirs from the one API response — so flipping between
-              the five costs no further requests. */}
-          <div className="compare">
-            <figure>
-              <div className="frame">
-                {preview && <img src={preview} alt="Your photo" />}
+              <div className="clm-verdict" aria-hidden="true">
+                <span className="clm-pct">{match.match.toFixed(0)}%</span>
+                <span className="clm-pct-label">match</span>
               </div>
-              <figcaption>You</figcaption>
-            </figure>
 
-            <div className="verdict" aria-hidden="true">
-              <span className="pct">{match.match.toFixed(0)}%</span>
-              <span className="pct-label">match</span>
+              <figure>
+                <div className="clm-frame">
+                  {match.image_url ? (
+                    <img
+                      src={match.image_url}
+                      alt={match.celebrity}
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        e.currentTarget.style.visibility = 'hidden'
+                      }}
+                    />
+                  ) : (
+                    <span className="clm-no-photo">No photo available</span>
+                  )}
+                </div>
+                <figcaption>{match.celebrity}</figcaption>
+              </figure>
             </div>
 
-            <figure>
-              <div className="frame">
-                {match.image_url ? (
-                  <img
-                    src={match.image_url}
-                    alt={match.celebrity}
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      e.currentTarget.style.visibility = 'hidden'
-                    }}
-                  />
-                ) : (
-                  <span className="no-photo">No photo available</span>
-                )}
-              </div>
-              <figcaption>{match.celebrity}</figcaption>
-            </figure>
-          </div>
+            <h2 className="clm-picks-label">Tap a name to compare</h2>
+            <ol className="clm-picks">
+              {results.map((m, i) => (
+                <li key={`${m.celebrity}-${i}`}>
+                  <button
+                    type="button"
+                    className={`clm-pick${i === selected ? ' is-on' : ''}`}
+                    aria-pressed={i === selected}
+                    onClick={() => setSelected(i)}
+                  >
+                    <span className="clm-thumb">
+                      {m.image_url && (
+                        <img
+                          src={m.image_url}
+                          alt=""
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                          }}
+                        />
+                      )}
+                    </span>
+                    <span className="clm-name">{m.celebrity}</span>
+                    <span className="clm-score">{m.match.toFixed(0)}%</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+      </div>
 
-          <h2>Tap a name to compare</h2>
-          <ol className="picks">
-            {results.map((m, i) => (
-              <li key={`${m.celebrity}-${i}`}>
-                <button
-                  type="button"
-                  className={i === selected ? 'on' : ''}
-                  aria-pressed={i === selected}
-                  onClick={() => setSelected(i)}
-                >
-                  <span className="thumb">
-                    {m.image_url && (
-                      <img
-                        src={m.image_url}
-                        alt=""
-                        loading="lazy"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none'
-                        }}
-                      />
-                    )}
-                  </span>
-                  <span className="name">{m.celebrity}</span>
-                  <span className="score">{m.match.toFixed(0)}%</span>
-                </button>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
-
-      <footer>
+      <footer className="clm-foot">
         <p>
           Your photo is never stored. Celebrity photos are shown from their original
           source and are not hosted here.
         </p>
         {health?.celebrity_count && (
-          <p className="meta">
+          <p className="clm-meta">
             {health.celebrity_count.toLocaleString('en-IN')} celebrities · {health.embedder}
           </p>
         )}
       </footer>
-    </main>
+    </>
   )
 }

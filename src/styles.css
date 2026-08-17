@@ -1,237 +1,561 @@
-:root {
-  --bg: #0e0f13;
-  --panel: #171922;
-  --line: #262a38;
-  --text: #eef0f6;
-  --muted: #9aa1b4;
-  --accent: #7c6cff;
-  --danger: #ff8080;
+/* ---------------------------------------------------------------------------
+   Celebrity Look-Alike — microfrontend styles.
 
-  color-scheme: dark;
-  background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+   EVERY rule in this file is scoped under `.clm-root`. This bundle is dropped
+   onto host pages we do not control, so a bare `button {}`, `h1 {}` or `* {}`
+   here would silently restyle the host's own UI. That constraint is also why
+   there is no Tailwind here: Preflight is a global reset by design.
+
+   Colours come from the Vayuz design system, written as token-with-fallback:
+
+       var(--color-primary, #ff7a00)
+
+   When the host defines the design-system token set we inherit its theme for
+   free, including dark mode. When it does not — standalone dev, the demo page,
+   a plain PHP page — the fallback is the design system's own value, so the
+   popup still looks right. Nothing here hardcodes a hex outside a fallback.
+--------------------------------------------------------------------------- */
+
+.clm-root {
+  /* --- brand ------------------------------------------------------------ */
+  --clm-primary: var(--color-primary, #ff7a00);
+  --clm-primary-dark: var(--color-primary-dark, #e06b00);
+  --clm-primary-alt: var(--color-primary-alt, #f68b2d);
+  --clm-orange-50: var(--color-orange-50, #fff8f2);
+  --clm-orange-100: var(--color-orange-100, #fff3e8);
+
+  /* --- surfaces --------------------------------------------------------- */
+  --clm-surface: var(--bg-surface, #ffffff);
+  --clm-surface-2: var(--bg-surface-2, #f8faff);
+  --clm-input: var(--bg-task-input, #f8f9fc);
+  --clm-hover: var(--bg-task-hover, #f4f5fb);
+
+  /* --- text ------------------------------------------------------------- */
+  --clm-heading: var(--text-task-heading, #1a202c);
+  --clm-body: var(--text-task-body, #4a5568);
+  --clm-mid: var(--text-task-mid, #4a5568);
+  --clm-muted: var(--text-muted, #94a3b8);
+
+  /* --- borders ---------------------------------------------------------- */
+  --clm-border: var(--border-card, #e8ecf2);
+  --clm-border-warm: var(--border-warm, #ead8ca);
+
+  /* --- status ----------------------------------------------------------- */
+  --clm-danger: var(--color-danger, #dc2626);
+  --clm-danger-bg: var(--color-danger-bg, #fee2e2);
+
+  /* --- shadows ---------------------------------------------------------- */
+  --clm-shadow-card: var(--shadow-card, 0 1px 3px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.05));
+  --clm-shadow-card-hover: var(--shadow-card-hover, 0 10px 28px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.06));
+  --clm-shadow-primary: var(--shadow-primary, 0 4px 16px rgba(255, 122, 0, 0.35));
+  --clm-shadow-primary-hover: var(--shadow-primary-hover, 0 8px 24px rgba(255, 122, 0, 0.42));
+
+  /* --- popup knobs the host may override -------------------------------- */
+  --clm-z: 9999;
+  --clm-scrim: rgba(15, 23, 42, 0.55);
+  /* The design system says font-family is inherited from the host shell. It is
+     still spelled out here because this bundle also runs on pages with no font
+     set at all, where `inherit` lands on Times New Roman. Hosts that care can
+     override --clm-font. */
+  --clm-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  color: var(--clm-body);
+  font-family: var(--clm-font);
   font-size: 16px;
   line-height: 1.5;
+  text-align: left;
 }
 
-* {
+/* Dark defaults, used only when the host has NOT declared a theme of its own.
+   A host that sets data-theme="vayuzsocial-light" while the OS is dark must not
+   get a dark popup, hence the :not([data-theme]) guard. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .clm-root {
+    --clm-orange-50: var(--color-orange-50, rgba(255, 122, 0, 0.1));
+    --clm-orange-100: var(--color-orange-100, rgba(255, 122, 0, 0.15));
+    --clm-surface: var(--bg-surface, #1c2128);
+    --clm-surface-2: var(--bg-surface-2, #21262d);
+    --clm-input: var(--bg-task-input, #21262d);
+    --clm-hover: var(--bg-task-hover, #21262d);
+    --clm-heading: var(--text-task-heading, #e6edf3);
+    --clm-body: var(--text-task-body, #8b949e);
+    --clm-mid: var(--text-task-mid, #8b949e);
+    --clm-muted: var(--text-muted, #6e7681);
+    --clm-border: var(--border-card, #30363d);
+    --clm-border-warm: var(--border-warm, #30363d);
+    --clm-danger: var(--color-danger, #f85149);
+    --clm-danger-bg: var(--color-danger-bg, rgba(248, 81, 73, 0.15));
+    --clm-shadow-card: var(--shadow-card, 0 1px 3px rgba(0, 0, 0, 0.4));
+    --clm-shadow-card-hover: var(--shadow-card-hover, 0 10px 28px rgba(0, 0, 0, 0.55));
+    --clm-shadow-primary: var(--shadow-primary, 0 4px 16px rgba(255, 122, 0, 0.45));
+    --clm-shadow-primary-hover: var(--shadow-primary-hover, 0 8px 24px rgba(255, 122, 0, 0.55));
+    --clm-scrim: rgba(2, 8, 20, 0.7);
+  }
+}
+
+/* Host declares dark explicitly but ships no tokens — same defaults. If it does
+   ship tokens, every var() above resolves to the host's value and these are
+   inert. Both design-system aliases are covered. */
+[data-theme='dark'] .clm-root,
+[data-theme='vayuzsocial-dark'] .clm-root {
+  --clm-orange-50: var(--color-orange-50, rgba(255, 122, 0, 0.1));
+  --clm-orange-100: var(--color-orange-100, rgba(255, 122, 0, 0.15));
+  --clm-surface: var(--bg-surface, #1c2128);
+  --clm-surface-2: var(--bg-surface-2, #21262d);
+  --clm-input: var(--bg-task-input, #21262d);
+  --clm-hover: var(--bg-task-hover, #21262d);
+  --clm-heading: var(--text-task-heading, #e6edf3);
+  --clm-body: var(--text-task-body, #8b949e);
+  --clm-mid: var(--text-task-mid, #8b949e);
+  --clm-muted: var(--text-muted, #6e7681);
+  --clm-border: var(--border-card, #30363d);
+  --clm-border-warm: var(--border-warm, #30363d);
+  --clm-danger: var(--color-danger, #f85149);
+  --clm-danger-bg: var(--color-danger-bg, rgba(248, 81, 73, 0.15));
+  --clm-shadow-card: var(--shadow-card, 0 1px 3px rgba(0, 0, 0, 0.4));
+  --clm-shadow-card-hover: var(--shadow-card-hover, 0 10px 28px rgba(0, 0, 0, 0.55));
+  --clm-shadow-primary: var(--shadow-primary, 0 4px 16px rgba(255, 122, 0, 0.45));
+  --clm-shadow-primary-hover: var(--shadow-primary-hover, 0 8px 24px rgba(255, 122, 0, 0.55));
+  --clm-scrim: rgba(2, 8, 20, 0.7);
+}
+
+/* Local reset. Scoped to our subtree so the host page is untouched, and broad
+   enough that the host's own `img { margin: 1rem }` cannot leak into ours. */
+.clm-root,
+.clm-root *,
+.clm-root *::before,
+.clm-root *::after {
   box-sizing: border-box;
+}
+
+.clm-root h1,
+.clm-root h2,
+.clm-root p,
+.clm-root ol,
+.clm-root figure,
+.clm-root figcaption,
+.clm-root fieldset,
+.clm-root legend {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.clm-root ol {
+  list-style: none;
+}
+
+.clm-root img {
+  display: block;
+  max-width: 100%;
+}
+
+.clm-root button,
+.clm-root input {
+  font: inherit;
+  color: inherit;
   margin: 0;
 }
 
-body {
-  min-height: 100dvh;
-  background: var(--bg);
+.clm-root button {
+  cursor: pointer;
 }
 
-/* Mobile-first: the expected visitor is on a phone, taking a selfie. */
-main {
-  max-width: 34rem;
-  margin: 0 auto;
-  padding: 2rem 1.25rem 3rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.75rem;
-}
+/* ---------------------------------------------------------------------------
+   Overlay + dialog
+--------------------------------------------------------------------------- */
 
-h1 {
-  font-size: 1.6rem;
-  letter-spacing: -0.02em;
-}
-
-.tagline {
-  color: var(--muted);
-  margin-top: 0.35rem;
-}
-
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-/* --- photo picker --- */
-
-.dropzone {
-  all: unset;
+.clm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--clm-z);
   display: grid;
   place-items: center;
-  aspect-ratio: 4 / 3;
-  border: 2px dashed var(--line);
-  border-radius: 1rem;
-  background: var(--panel);
-  cursor: pointer;
-  overflow: hidden;
-  text-align: center;
-  transition: border-color 0.15s ease;
+  padding: 1rem;
+  background: var(--clm-scrim);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  overscroll-behavior: contain;
+  animation: clm-fade 0.18s ease-out;
 }
 
-.dropzone:hover,
-.dropzone:focus-visible {
-  border-color: var(--accent);
-}
-
-.dropzone.has-photo {
-  border-style: solid;
-  aspect-ratio: auto;
-}
-
-.dropzone span {
+.clm-dialog {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  padding: 1rem;
-}
-
-.dropzone small {
-  color: var(--muted);
-}
-
-.dropzone img {
-  display: block;
   width: 100%;
-  max-height: 55vh;
-  object-fit: contain;
+  max-width: 34rem;
+  max-height: min(90dvh, 48rem);
+  border-radius: 1rem; /* rounded-2xl */
+  border: 1px solid var(--clm-border-warm);
+  background: var(--clm-surface);
+  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.18);
+  animation: clm-pop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
 }
 
-/* --- gender segmented control --- */
-
-fieldset {
-  border: 0;
-  padding: 0;
+@keyframes clm-fade {
+  from {
+    opacity: 0;
+  }
 }
 
-legend {
-  color: var(--muted);
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
+@keyframes clm-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
 }
 
-.segmented {
+@media (prefers-reduced-motion: reduce) {
+  .clm-overlay,
+  .clm-dialog {
+    animation: none;
+  }
+}
+
+.clm-close {
+  position: absolute;
+  top: 0.875rem;
+  right: 0.875rem;
+  z-index: 1;
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  gap: 0.375rem;
-  padding: 0.25rem;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 0.75rem;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--clm-mid);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.segmented label {
-  text-align: center;
-  padding: 0.55rem 0.5rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  color: var(--muted);
-  transition: background 0.15s ease, color 0.15s ease;
+.clm-close:hover {
+  background: var(--clm-hover);
+  border-color: var(--clm-border);
+  color: var(--clm-primary);
 }
 
-.segmented label.on {
-  background: var(--accent);
-  color: #fff;
-}
-
-.segmented label:has(:focus-visible) {
-  outline: 2px solid var(--accent);
+.clm-close:focus-visible {
+  outline: 2px solid var(--clm-primary);
   outline-offset: 2px;
 }
 
-/* --- submit --- */
+/* ---------------------------------------------------------------------------
+   Layout — head and foot stay put, only the middle scrolls
+--------------------------------------------------------------------------- */
 
-.go {
-  padding: 0.9rem;
-  border: 0;
-  border-radius: 0.75rem;
-  background: var(--accent);
-  color: #fff;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
+.clm-head {
+  flex: none;
+  padding: 1.5rem 3rem 1rem 1.5rem; /* right padding clears the close button */
 }
 
-.go:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+.clm-title {
+  color: var(--clm-heading);
+  font-size: 1.5rem; /* text-2xl */
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
 }
 
-.hint,
-.error {
-  font-size: 0.9rem;
+.clm-tagline {
+  margin-top: 0.25rem; /* mt-1 */
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--clm-mid);
 }
 
-.hint {
-  color: var(--muted);
-}
-
-.error {
-  color: var(--danger);
-  background: color-mix(in srgb, var(--danger) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-}
-
-/* --- the comparison --- */
-
-.results {
+.clm-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 0 1.5rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+.clm-foot {
+  flex: none;
+  border-top: 1px solid var(--clm-border);
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 500;
+  color: var(--clm-muted);
+}
+
+.clm-meta {
+  font-variant-numeric: tabular-nums;
+}
+
+.clm-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Photo picker — design system §8.7 empty state
+--------------------------------------------------------------------------- */
+
+.clm-dropzone {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  padding: 1rem;
+  overflow: hidden;
+  text-align: center;
+  border: 2px dashed var(--clm-border);
+  border-radius: 1rem;
+  background: var(--clm-surface-2);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.clm-dropzone:hover {
+  border-color: var(--clm-primary);
+  background: var(--clm-orange-50);
+}
+
+.clm-dropzone:focus-visible {
+  outline: 2px solid var(--clm-primary);
+  outline-offset: 2px;
+}
+
+.clm-dropzone.is-filled {
+  padding: 0;
+  aspect-ratio: auto;
+  border-style: solid;
+  border-width: 1px;
+  background: var(--clm-surface-2);
+}
+
+.clm-dropzone.is-filled:hover {
+  border-color: var(--clm-primary);
+}
+
+.clm-dropzone-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.clm-dropzone-icon {
+  margin-bottom: 0.25rem;
+  color: var(--clm-primary-alt);
+}
+
+.clm-dropzone-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--clm-heading);
+}
+
+.clm-dropzone-hint {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--clm-mid);
+}
+
+.clm-dropzone img {
+  width: 100%;
+  max-height: 42vh;
+  object-fit: contain;
+}
+
+/* ---------------------------------------------------------------------------
+   Segmented control — design system §8.6 active tab pill
+--------------------------------------------------------------------------- */
+
+.clm-legend {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 500;
+  color: var(--clm-mid);
+}
+
+.clm-segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.125rem;
+  padding: 0.125rem; /* p-0.5 */
+  border: 1px solid var(--clm-border);
+  border-radius: 0.5rem; /* rounded-lg */
+  background: var(--clm-input);
+}
+
+.clm-segment {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem; /* rounded-md */
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--clm-mid);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.clm-segment:hover {
+  color: var(--clm-heading);
+}
+
+.clm-segment.is-on {
+  background: var(--clm-surface);
+  color: var(--clm-heading);
+  box-shadow: var(--clm-shadow-card);
+}
+
+.clm-segment:has(:focus-visible) {
+  outline: 2px solid var(--clm-primary);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   Primary CTA — design system §8.1
+--------------------------------------------------------------------------- */
+
+.clm-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border: 0;
+  border-radius: 9999px; /* rounded-full */
+  background: var(--clm-primary);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: var(--clm-shadow-primary);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.clm-cta:hover:not(:disabled) {
+  background: var(--clm-primary-dark);
+  box-shadow: var(--clm-shadow-primary-hover);
+  transform: translateY(-2px);
+}
+
+.clm-cta:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.clm-cta:focus-visible {
+  outline: 2px solid var(--clm-primary);
+  outline-offset: 2px;
+}
+
+.clm-cta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.clm-spinner {
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 9999px;
+  animation: clm-spin 0.7s linear infinite;
+}
+
+@keyframes clm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clm-spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+.clm-hint {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--clm-mid);
+  text-align: center;
+}
+
+.clm-error {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--clm-danger);
+  background: var(--clm-danger-bg);
+  color: var(--clm-danger);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* ---------------------------------------------------------------------------
+   The comparison
+--------------------------------------------------------------------------- */
+
+.clm-results {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 /* Two equal columns with the score between them. Equal sizing is the whole
    point: different-sized faces are much harder to compare by eye. */
-.compare {
+.clm-compare {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: start;
   gap: 0.5rem;
 }
 
-.compare figure {
-  margin: 0;
+.clm-compare figure {
   min-width: 0;
 }
 
-.frame {
+.clm-frame {
   aspect-ratio: 3 / 4;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  background: var(--panel);
-  border: 1px solid var(--line);
   display: grid;
   place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--clm-border);
+  border-radius: 0.75rem; /* rounded-xl */
+  background: var(--clm-surface-2);
+  box-shadow: var(--clm-shadow-card);
 }
 
-.frame img {
+.clm-frame img {
   width: 100%;
   height: 100%;
   /* Faces sit above centre in most portraits, so bias the crop upward rather
      than slicing foreheads off. */
   object-fit: cover;
   object-position: center 28%;
-  display: block;
 }
 
-.no-photo {
-  color: var(--muted);
-  font-size: 0.8rem;
-  text-align: center;
+.clm-no-photo {
   padding: 0.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--clm-muted);
 }
 
-.compare figcaption {
+.clm-compare figcaption {
   margin-top: 0.5rem;
   text-align: center;
+  font-size: 0.875rem;
   font-weight: 600;
-  font-size: 0.95rem;
+  color: var(--clm-heading);
   /* Long names must not widen the column and unbalance the pair. */
   overflow-wrap: anywhere;
 }
 
-.verdict {
+.clm-verdict {
   align-self: center;
   display: flex;
   flex-direction: column;
@@ -239,107 +563,106 @@ legend {
   padding: 0 0.25rem;
 }
 
-.pct {
-  font-size: 1.35rem;
+.clm-pct {
+  font-size: 1.375rem;
   font-weight: 700;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
   line-height: 1.1;
+  color: var(--clm-primary);
+  font-variant-numeric: tabular-nums;
 }
 
-.pct-label {
-  font-size: 0.7rem;
-  color: var(--muted);
+.clm-pct-label {
+  font-size: 0.625rem; /* text-[10px] */
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.14em;
+  color: var(--clm-muted);
 }
 
-/* --- the five picks --- */
+/* ---------------------------------------------------------------------------
+   The five picks — design system §8.3 card
+--------------------------------------------------------------------------- */
 
-.results h2 {
-  font-size: 0.875rem;
-  color: var(--muted);
+.clm-picks-label {
+  font-size: 0.75rem;
   font-weight: 500;
+  color: var(--clm-mid);
 }
 
-.picks {
-  list-style: none;
-  padding: 0;
+.clm-picks {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.picks button {
+.clm-pick {
   width: 100%;
   display: grid;
   grid-template-columns: 2.5rem 1fr auto;
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 0.75rem;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 0.75rem;
-  color: inherit;
-  font: inherit;
+  border: 1px solid var(--clm-border);
+  border-radius: 0.75rem; /* rounded-xl */
+  background: var(--clm-surface);
+  box-shadow: var(--clm-shadow-card);
   text-align: left;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.picks button:hover {
-  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+.clm-pick:hover {
+  border-color: var(--clm-primary);
+  box-shadow: var(--clm-shadow-card-hover);
+  transform: translateY(-2px);
 }
 
-.picks button.on {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+.clm-pick:focus-visible {
+  outline: 2px solid var(--clm-primary);
+  outline-offset: 2px;
 }
 
-.picks .thumb {
+.clm-pick.is-on {
+  border-color: var(--clm-primary);
+  background: var(--clm-orange-50);
+}
+
+.clm-thumb {
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 0.5rem;
   overflow: hidden;
-  background: var(--line);
+  border-radius: 9999px; /* rounded-full */
+  background: var(--clm-input);
 }
 
-.picks .thumb img {
+.clm-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center 28%;
-  display: block;
 }
 
-.picks .name {
+.clm-name {
+  font-size: 0.875rem;
   font-weight: 600;
+  color: var(--clm-heading);
   overflow-wrap: anywhere;
 }
 
-.picks .score {
-  font-variant-numeric: tabular-nums;
-  color: var(--accent);
+.clm-score {
+  padding: 0.125rem 0.625rem;
+  border-radius: 9999px;
+  background: var(--clm-orange-100);
+  color: var(--clm-primary);
+  font-size: 0.75rem;
   font-weight: 600;
-}
-
-/* --- footer --- */
-
-footer {
-  color: var(--muted);
-  font-size: 0.85rem;
-  border-top: 1px solid var(--line);
-  padding-top: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.meta {
   font-variant-numeric: tabular-nums;
 }
 
-.visually-hidden {
+/* ---------------------------------------------------------------------------
+   Utilities
+--------------------------------------------------------------------------- */
+
+.clm-sr-only {
   position: absolute;
   width: 1px;
   height: 1px;

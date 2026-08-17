@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:mf": "vite build --config vite.config.mf.js",
     "preview": "vite preview"
   },
   "dependencies": {

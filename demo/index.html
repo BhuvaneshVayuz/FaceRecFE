@@ -1,0 +1,237 @@
+<!doctype html>
+<!--
+  Sample host page for the Celebrity Look-Alike microfrontend.
+
+  Run `npm run build:mf` first, then serve the project root and open
+  /demo/index.html:
+
+      npx serve .            (or: python -m http.server)
+
+  Opening this file over file:// mostly works too, but the API call will come
+  from an "Origin: null" and needs CORS_ALLOW_ORIGINS=* on the backend.
+
+  Two things this page is deliberately demonstrating:
+
+  1. It defines a handful of Vayuz design-system tokens below. The popup reads
+     them through var(--color-primary, ...) and follows the theme toggle without
+     knowing anything about this page. Delete the token block and the popup
+     still looks right — it falls back to the design system's own values.
+
+  2. The page has its own <h1>, <button> and <img> styles. Nothing the popup
+     ships alters them, because every rule in the bundle is scoped to .clm-root.
+-->
+<html lang="en" data-theme="vayuzsocial-light">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Host platform — Celebrity Look-Alike popup demo</title>
+  <style>
+    /* --- a slice of the host's design-system tokens ---------------------- */
+    [data-theme='vayuzsocial-light'] {
+      --color-primary: #ff7a00;
+      --color-primary-dark: #e06b00;
+      --color-primary-alt: #f68b2d;
+      --color-orange-50: #fff8f2;
+      --color-orange-100: #fff3e8;
+      --bg-page: #f4f6fa;
+      --bg-surface: #ffffff;
+      --bg-surface-2: #f8faff;
+      --bg-task-input: #f8f9fc;
+      --bg-task-hover: #f4f5fb;
+      --text-heading: #12142e;
+      --text-task-heading: #1a202c;
+      --text-task-body: #4a5568;
+      --text-task-mid: #4a5568;
+      --text-muted: #94a3b8;
+      --border-card: #e8ecf2;
+      --border-warm: #ead8ca;
+      --color-danger: #dc2626;
+      --color-danger-bg: #fee2e2;
+      --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-card-hover: 0 10px 28px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.06);
+      --shadow-primary: 0 4px 16px rgba(255, 122, 0, 0.35);
+      --shadow-primary-hover: 0 8px 24px rgba(255, 122, 0, 0.42);
+    }
+
+    [data-theme='vayuzsocial-dark'] {
+      --color-primary: #ff7a00;
+      --color-primary-dark: #e06b00;
+      --color-primary-alt: #f68b2d;
+      --color-orange-50: rgba(255, 122, 0, 0.1);
+      --color-orange-100: rgba(255, 122, 0, 0.15);
+      --bg-page: #07101e;
+      --bg-surface: #1c2128;
+      --bg-surface-2: #21262d;
+      --bg-task-input: #21262d;
+      --bg-task-hover: #21262d;
+      --text-heading: #ffffff;
+      --text-task-heading: #e6edf3;
+      --text-task-body: #8b949e;
+      --text-task-mid: #8b949e;
+      --text-muted: #6e7681;
+      --border-card: #30363d;
+      --border-warm: #30363d;
+      --color-danger: #f85149;
+      --color-danger-bg: rgba(248, 81, 73, 0.15);
+      --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
+      --shadow-card-hover: 0 10px 28px rgba(0, 0, 0, 0.55);
+      --shadow-primary: 0 4px 16px rgba(255, 122, 0, 0.45);
+      --shadow-primary-hover: 0 8px 24px rgba(255, 122, 0, 0.55);
+    }
+
+    /* --- the host's own page styles, which the popup must not disturb ---- */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-page);
+      color: var(--text-task-body);
+    }
+
+    .shell {
+      max-width: 44rem;
+      margin: 0 auto;
+      padding: 3rem 1.25rem 5rem;
+    }
+
+    h1 {
+      margin: 0 0 0.5rem;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+      color: var(--text-heading);
+    }
+
+    .lede {
+      margin: 0 0 2rem;
+      line-height: 1.6;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 2.5rem;
+    }
+
+    button {
+      padding: 0.7rem 1.25rem;
+      border: 1px solid var(--border-card);
+      border-radius: 9999px;
+      background: var(--bg-surface);
+      color: var(--text-task-body);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: transparent;
+      background: var(--color-primary);
+      color: #fff;
+      box-shadow: var(--shadow-primary);
+    }
+
+    .card {
+      padding: 1.25rem;
+      border: 1px solid var(--border-card);
+      border-radius: 0.75rem;
+      background: var(--bg-surface);
+      box-shadow: var(--shadow-card);
+    }
+
+    .card h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+      color: var(--text-task-heading);
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.85em;
+    }
+
+    pre {
+      margin: 0;
+      overflow-x: auto;
+      color: var(--text-task-mid);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+    <h1>Host platform</h1>
+    <p class="lede">
+      A stand-in for the page the microfrontend gets embedded into. This page has
+      its own heading, buttons and tokens — the popup borrows the tokens and
+      touches nothing else.
+    </p>
+
+    <div class="row">
+      <button type="button" class="primary" id="open">Who do I look like?</button>
+      <button type="button" id="open-in-place">Open into a host container</button>
+      <button type="button" id="theme">Toggle theme</button>
+    </div>
+
+    <!-- Target for the second button: a container the host owns and keeps. -->
+    <div id="popup-slot"></div>
+
+    <div class="card">
+      <h2>Embedding it</h2>
+      <pre><code>&lt;script src="celeb-lookalike-mf.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  CelebLookalikeMF.open({ apiBase: 'https://your-api.example.com' });
+&lt;/script&gt;</code></pre>
+    </div>
+  </div>
+
+  <!-- Built by `npm run build:mf`. One file: JS and CSS together. -->
+  <script src="../dist-mf/celeb-lookalike-mf.js"></script>
+  <script>
+    // Point this at your API. Locally that is whatever `uvicorn src.api:app
+    // --reload` is serving; leave it out entirely to use the value baked in at
+    // build time from VITE_API_BASE.
+    var API_BASE = 'http://127.0.0.1:8000';
+
+    // open() makes its own container at the end of <body> and removes it again
+    // on close, so there is nothing to add to the page first.
+    document.getElementById('open').addEventListener('click', function () {
+      CelebLookalikeMF.open({
+        apiBase: API_BASE,
+        title: 'Who do you look like?',
+        onClose: function () {
+          console.log('[host] popup closed');
+        },
+      });
+    });
+
+    // mount() is the other half: render into a container the host supplies and
+    // keep the handle. Same popup either way.
+    var dispose = null;
+    document.getElementById('open-in-place').addEventListener('click', function () {
+      if (dispose) dispose();
+      dispose = CelebLookalikeMF.mount('#popup-slot', {
+        apiBase: API_BASE,
+        tagline: 'Mounted into a container this page owns.',
+        onClose: function () {
+          dispose = null;
+        },
+      });
+    });
+
+    // The popup follows this without being told — it reads the same tokens.
+    document.getElementById('theme').addEventListener('click', function () {
+      var root = document.documentElement;
+      var dark = root.getAttribute('data-theme') === 'vayuzsocial-dark';
+      root.setAttribute('data-theme', dark ? 'vayuzsocial-light' : 'vayuzsocial-dark');
+    });
+  </script>
+</body>
+
+</html>
