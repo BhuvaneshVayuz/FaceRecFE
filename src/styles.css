@@ -1,0 +1,349 @@
+:root {
+  --bg: #0e0f13;
+  --panel: #171922;
+  --line: #262a38;
+  --text: #eef0f6;
+  --muted: #9aa1b4;
+  --accent: #7c6cff;
+  --danger: #ff8080;
+
+  color-scheme: dark;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+/* Mobile-first: the expected visitor is on a phone, taking a selfie. */
+main {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+h1 {
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  color: var(--muted);
+  margin-top: 0.35rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* --- photo picker --- */
+
+.dropzone {
+  all: unset;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  border: 2px dashed var(--line);
+  border-radius: 1rem;
+  background: var(--panel);
+  cursor: pointer;
+  overflow: hidden;
+  text-align: center;
+  transition: border-color 0.15s ease;
+}
+
+.dropzone:hover,
+.dropzone:focus-visible {
+  border-color: var(--accent);
+}
+
+.dropzone.has-photo {
+  border-style: solid;
+  aspect-ratio: auto;
+}
+
+.dropzone span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem;
+}
+
+.dropzone small {
+  color: var(--muted);
+}
+
+.dropzone img {
+  display: block;
+  width: 100%;
+  max-height: 55vh;
+  object-fit: contain;
+}
+
+/* --- gender segmented control --- */
+
+fieldset {
+  border: 0;
+  padding: 0;
+}
+
+legend {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.375rem;
+  padding: 0.25rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+}
+
+.segmented label {
+  text-align: center;
+  padding: 0.55rem 0.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  color: var(--muted);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.segmented label.on {
+  background: var(--accent);
+  color: #fff;
+}
+
+.segmented label:has(:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --- submit --- */
+
+.go {
+  padding: 0.9rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.go:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hint,
+.error {
+  font-size: 0.9rem;
+}
+
+.hint {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+}
+
+/* --- the comparison --- */
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Two equal columns with the score between them. Equal sizing is the whole
+   point: different-sized faces are much harder to compare by eye. */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 0.5rem;
+}
+
+.compare figure {
+  margin: 0;
+  min-width: 0;
+}
+
+.frame {
+  aspect-ratio: 3 / 4;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+}
+
+.frame img {
+  width: 100%;
+  height: 100%;
+  /* Faces sit above centre in most portraits, so bias the crop upward rather
+     than slicing foreheads off. */
+  object-fit: cover;
+  object-position: center 28%;
+  display: block;
+}
+
+.no-photo {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.compare figcaption {
+  margin-top: 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+  /* Long names must not widen the column and unbalance the pair. */
+  overflow-wrap: anywhere;
+}
+
+.verdict {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 0.25rem;
+}
+
+.pct {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.pct-label {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* --- the five picks --- */
+
+.results h2 {
+  font-size: 0.875rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.picks {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.picks button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.picks button:hover {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+}
+
+.picks button.on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+}
+
+.picks .thumb {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: var(--line);
+}
+
+.picks .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+  display: block;
+}
+
+.picks .name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.picks .score {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* --- footer --- */
+
+footer {
+  color: var(--muted);
+  font-size: 0.85rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.meta {
+  font-variant-numeric: tabular-nums;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
